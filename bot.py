@@ -12,8 +12,9 @@ load_dotenv()
 commands = {
     '/start': 'Start the bot',
     '/help': 'View all available commands',
-    '/button': 'Display a button',
-    # Add more commands here
+    '/movie':'gives info about the movie',
+    
+    
 }
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
@@ -23,29 +24,37 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 
 
-def get_random_movie():
+def get_movie(message):
     
-    url = f"https://www.omdbapi.com/?apikey={API_TOKEN}&t=Inception&plot=full"
-    response = requests.get(url)
-    
-    data = response.json()
-    title = data.get("Title")
-    year = data.get("Year")
-    imdb_id = data.get("imdbID")
-    plot = data.get("Plot")
-    return plot
+   movie_title = message.text
+   url = f"http://www.omdbapi.com/?apikey={API_TOKEN}&t={movie_title}"
+   response = requests.get(url)
+   if response.status_code == 200:
+        movie_info = response.json()
+        if movie_info["Response"] == "True":
+            title = movie_info["Title"]
+            year = movie_info["Year"]
+            plot = movie_info["Plot"]
+            rating = movie_info["imdbRating"]
+            genre = movie_info["Genre"]
+            director = movie_info["Director"]
+            actors = movie_info["Actors"]
+            poster = movie_info["Poster"]
+            message_text = f"<b>Title:</b> {title}\n<b>Year:</b> {year}\n<b>Plot:</b> {plot}\n<b>IMDB Rating:</b> {rating}\n<b>Genre:</b> {genre}\n<b>Director:</b> {director}\n<b>Actors:</b> {actors}"
+            bot.send_message(message.chat.id, message_text, parse_mode="HTML")
+            if poster != "N/A":
+                bot.send_photo(message.chat.id, poster)
+            else:
+                bot.send_message(message.chat.id, "Movie not found.")
+        else:
+            bot.send_message(message.chat.id, "Error getting movie information.")
 
 
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
-    bot.send_message(message.chat.id,'Hello')
-@bot.message_handler(commands=['button'])
-def button_message(message):
-    markup=types.ReplyKeyboardMarkup(resize_keyboard=True)
-    item1=types.KeyboardButton("Button")
-    markup.add(item1)
-    bot.send_message(message.chat.id,'Choose what do you need',reply_markup=markup)
+    bot.send_message(message.chat.id,'Welcome to the movie bot! Please give a movie title')
+
 
 @bot.message_handler(commands=['help'])
 def send_welcome(message):
@@ -54,10 +63,10 @@ def send_welcome(message):
         response += f"{command} - {description}\n"
     bot.send_message(message.chat.id, response)
 
-@bot.message_handler(commands=['recommend'])
-def recommend(message):
-    random_movie = get_random_movie()
-    bot.send_message(message.chat.id, random_movie)
+@bot.message_handler(commands=['movie'])
+def movie_info(message):
+    bot.send_message(message.chat.id, "Enter the title of the movie:")
+    bot.register_next_step_handler(message, get_movie)
 
 
 
