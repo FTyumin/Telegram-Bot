@@ -1,7 +1,10 @@
 import os
+import random
+import requests
+
+from dotenv import load_dotenv
 import telebot
 from telebot import types
-from dotenv import load_dotenv
 
 
 load_dotenv()
@@ -14,7 +17,23 @@ commands = {
 }
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
+API_TOKEN = os.environ.get('OMDB_API_KEY')
+
 bot = telebot.TeleBot(BOT_TOKEN)
+
+
+
+def get_random_movie():
+    
+    url = f"https://www.omdbapi.com/?apikey={API_TOKEN}&t=Inception&plot=full"
+    response = requests.get(url)
+    
+    data = response.json()
+    title = data.get("Title")
+    year = data.get("Year")
+    imdb_id = data.get("imdbID")
+    plot = data.get("Plot")
+    return plot
 
 
 
@@ -34,6 +53,11 @@ def send_welcome(message):
     for command, description in commands.items():
         response += f"{command} - {description}\n"
     bot.send_message(message.chat.id, response)
+
+@bot.message_handler(commands=['recommend'])
+def recommend(message):
+    random_movie = get_random_movie()
+    bot.send_message(message.chat.id, random_movie)
 
 
 
