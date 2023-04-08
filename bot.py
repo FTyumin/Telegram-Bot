@@ -1,10 +1,9 @@
 import os
-import random
 import requests
-
+import datetime
 from dotenv import load_dotenv
 import telebot
-from telebot import types
+
 
 
 load_dotenv()
@@ -19,6 +18,7 @@ commands = {
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 API_TOKEN = os.environ.get('OMDB_API_KEY')
+API_TOKEN_TMDB = os.environ.get('TMDB_API_KEY')
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -49,6 +49,19 @@ def get_movie(message):
         else:
             bot.send_message(message.chat.id, "Error getting movie information.")
 
+def upcoming_movies():
+    url = 'https://api.themoviedb.org/3/movie/upcoming'
+    params = {'api_key': API_TOKEN_TMDB, 'language': 'en-US', 'page': 1}
+    response = requests.get(url, params=params)
+    movies = response.json()['results']
+    upcoming_movies = []
+    today = datetime.date.today()
+    for movie in movies:
+        release_date = datetime.datetime.strptime(movie['release_date'], '%Y-%m-%d').date()
+        if release_date >= today:
+            upcoming_movies.append(movie)
+    return upcoming_movies
+
 
 
 @bot.message_handler(commands=['start'])
@@ -68,6 +81,14 @@ def movie_info(message):
     bot.send_message(message.chat.id, "Enter the title of the movie:")
     bot.register_next_step_handler(message, get_movie)
 
+@bot.message_handler(commands=['new'])
+def new_movies(message):
+    upcoming = upcoming_movies()
+    if not upcoming:
+        bot.send_message(message.chat.id, "No upcoming movies.")
+    else:
+        for movie in upcoming:
+            bot.send_message(message.chat.id, f"{movie['title']} ({movie['release_date']})")
 
 
 bot.infinity_polling()
