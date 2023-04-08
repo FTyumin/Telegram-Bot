@@ -25,7 +25,6 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 
 def get_movie(message):
-    
    movie_title = message.text
    url = f"http://www.omdbapi.com/?apikey={API_TOKEN}&t={movie_title}"
    response = requests.get(url)
@@ -55,11 +54,12 @@ def upcoming_movies():
     response = requests.get(url, params=params)
     movies = response.json()['results']
     upcoming_movies = []
-    today = datetime.date.today()
+    counter = 0
     for movie in movies:
-        release_date = datetime.datetime.strptime(movie['release_date'], '%Y-%m-%d').date()
-        if release_date >= today:
-            upcoming_movies.append(movie)
+        if counter ==3:
+            break
+        upcoming_movies.append(movie)
+        counter +=1
     return upcoming_movies
 
 
@@ -88,7 +88,7 @@ def new_movies(message):
         bot.send_message(message.chat.id, "No upcoming movies.")
     else:
         for movie in upcoming:
-            bot.send_message(message.chat.id, f"{movie['title']} ({movie['release_date']})")
+          bot.send_message(message.chat.id, f"{movie['title']} ({movie['release_date']}) {movie['overview']}")
 
 
 bot.infinity_polling()
