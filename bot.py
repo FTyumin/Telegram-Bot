@@ -62,12 +62,16 @@ def upcoming_movies():
         counter += 1
     return upcoming_movies
 
-def trend():
+def trend(count):
     url = "https://api.themoviedb.org/3/trending/movie/week?"
-    params = {"api_key": API_TOKEN_TMDB, "media_type": "movie", "page": 1}
+    params = {"api_key": API_TOKEN_TMDB, "media_type": "movie", "page": 2}
     response = requests.get(url, params=params)
     movies = response.json()["results"]
-    return movies
+    
+    result = []
+    for i in range(count):
+        result.append(movies[count])
+    return result
 
 
 
@@ -107,7 +111,7 @@ def new_movies(message):
 
 @bot.message_handler(commands=["trend"])
 def trend_movies(message):
-    text = trend()
+    text = trend(4)
     bot.send_message(message.chat.id,text)
 
 
