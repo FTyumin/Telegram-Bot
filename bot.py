@@ -1,6 +1,5 @@
 import os
 import requests
-import datetime
 from dotenv import load_dotenv
 import telebot
 
@@ -10,7 +9,8 @@ load_dotenv()
 commands = {
     "/start": "Start the bot",
     "/help": "View all available commands",
-    "/movie": "gives info about the movie",
+    "/movie": "Gives info about the movie",
+    "/new":"Find out about new releases"
 }
 
 # retrieves the bot tokens from the environment variables
@@ -62,6 +62,14 @@ def upcoming_movies():
         counter += 1
     return upcoming_movies
 
+def trend():
+    url = "https://api.themoviedb.org/3/trending/movie/week?"
+    params = {"api_key": API_TOKEN_TMDB, "media_type": "movie", "page": 1}
+    response = requests.get(url, params=params)
+    movies = response.json()["results"]
+    return movies
+
+
 
 # decorator functions
 @bot.message_handler(commands=["start"])
@@ -96,6 +104,11 @@ def new_movies(message):
                 message.chat.id,
                 f"{movie['title']} ({movie['release_date']}) {movie['overview']}",
             )
+
+@bot.message_handler(commands=["trend"])
+def trend_movies(message):
+    text = trend()
+    bot.send_message(message.chat.id,text)
 
 
 # starts the bot's polling loop, allowing it to receive and respond to user messages indefinitely
