@@ -2,6 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 import telebot
+import random
 
 # loads environment variables from a .env file located in the same directory as the script
 load_dotenv()
@@ -73,6 +74,32 @@ def trend(count):
         result.append(movies[count])
     return result
 
+def recommend_movie():
+    # Choose a random letter to use in the movie title search query
+    random_letter = random.choice('abcdefghijklmnopqrstuvwxyz')
+    # Construct the API URL to search for a random movie
+    url = f"http://www.omdbapi.com/?apikey={API_TOKEN}&s={random_letter}&type=movie"
+    response = requests.get(url)
+    if response.status_code == 200:
+        movies = response.json()["Search"]
+        if len(movies) > 0:
+            # Choose a random movie from the search results
+            movie = random.choice(movies)
+            # Get more detailed information about the selected movie
+            url = f"http://www.omdbapi.com/?apikey={API_TOKEN}&i={movie['imdbID']}"
+            response = requests.get(url)
+            if response.status_code == 200:
+                movie_info = response.json()
+                title = movie_info["Title"]
+                year = movie_info["Year"]
+                plot = movie_info["Plot"]
+                message_text = f"Recommended movie: <b>{title}</b> ({year})\n\n{plot}"
+                return message_text
+        else:
+            return "No movies found."
+    else:
+        return "Error getting movie information."
+
 
 
 # decorator functions
@@ -113,6 +140,12 @@ def new_movies(message):
 def trend_movies(message):
     text = trend(4)
     bot.send_message(message.chat.id,text)
+
+@bot.message_handler(commands=["recommend"])
+def recommendation_movie():
+    
+    recommend_movie()
+    
 
 
 # starts the bot's polling loop, allowing it to receive and respond to user messages indefinitely
